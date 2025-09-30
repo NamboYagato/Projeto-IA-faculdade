@@ -1,12 +1,19 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QVBoxLayout, QComboBox
+from BuscaNP import buscaNP
+from leitor_grafo import carregar_grafo_txt
+ 
+ #armazena os nos
+nos, grafo = carregar_grafo_txt("grafo.txt")
 
 
 class MinhaJanela(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("Minha Interface PyQt5")
+        self.busca = buscaNP()
+
+        self.setWindowTitle("Interface de busca")
         self.setGeometry(200, 200, 300, 200)
 
         #layout
@@ -17,29 +24,26 @@ class MinhaJanela(QWidget):
         
         #combobox com as opções de busca
         self.combo = QComboBox(self)
-        self.combo.addItems(["Opção 1","opção2","opção3","opção4"])
+        self.combo.addItems(["Amplitude", "Profundidade", "Profundidade Limitada", "Aprofundamento Iterativo", "Bidirecional"])
         layout.addWidget(self.combo)
 
         #conexões 
         self.combo.currentIndexChanged.connect(self.mudar_opcao)
-       
-        #armazem temporario dos nos
-        self.nos = ['A','B','C','D']
+   
         #adição futura do custo do precurso... 
-        self.custo 
-
+        
         self.combo_inicio = QComboBox(self)
-        self.combo_inicio.addItems(self.nos)
+        self.combo_inicio.addItems(nos)
 
         self.combo_fim = QComboBox(self)
-        self.combo_fim.addItems(self.nos)
+        self.combo_fim.addItems(nos)
 
         layout.addWidget(self.combo_inicio)
         layout.addWidget(self.combo_fim)
 
-        self.busca = QPushButton("Executar busca", self)
-        layout.addWidget(self.busca)
-        self.busca.clicked.connect(self.executar_busca)
+        self.botao_busca = QPushButton("Executar busca", self)
+        layout.addWidget(self.botao_busca)
+        self.botao_busca.clicked.connect(self.executar_busca)
         
         self.setLayout(layout)
 
@@ -51,7 +55,25 @@ class MinhaJanela(QWidget):
         opcao = self.combo.currentText()
         inicio = self.combo_inicio.currentText()
         fim = self.combo_fim.currentText()
-        self.label.setText(f"Buscando no caminho: {inicio} para {fim} utilizando o {opcao}" )
+
+        resultado = None
+
+        if opcao == "Amplitude":
+            resultado = self.busca.amplitude(inicio, fim, nos, grafo)
+        elif opcao == "Profundidade":
+             resultado = self.busca.profundidade(inicio, fim, nos, grafo)
+        elif opcao == "Profundidade Limitada":
+            resultado = self.busca.prof_limitada(inicio, fim, nos, grafo, 4) #limite 
+        elif opcao == "Aprofundamento Iterativo":
+            resultado = self.busca.aprof_iterativo(inicio, fim, nos, grafo, 5) #limite máximo
+        elif opcao == "Bidirecional":
+            resultado = self.busca.bidirecional(inicio, fim, nos, grafo)
+
+        if resultado:
+            custo = len(resultado) - 1 
+            self.label.setText(f"{opcao}: {resultado} (Custo: {custo})")
+        else:
+            self.label.setText(f"{opcao}: nenhum caminho encontrado")
         
 
 app = QApplication(sys.argv)
