@@ -1,8 +1,6 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QVBoxLayout, QComboBox, QSpinBox, QFormLayout
 from PyQt5.QtWidgets import QSizePolicy
-
-# ## MELHORIA 1: Importações completas e organizadas no topo.
 import networkx as nx
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
