@@ -1,11 +1,11 @@
 A B C
-B D E
-C F G
-D H
-E H I
-F J
-G J
-H K
-I K
-J K
-K
+B A D E
+C A F G
+D B H
+E B H I
+F C J
+G C J
+H D E K
+I E K
+J F G K
+K H I J
