@@ -1,10 +1,12 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QVBoxLayout, QComboBox
 from BuscaNP import buscaNP
-from leitor_grafo import carregar_grafo_txt
+from BuscaP import buscaP
+from leitor_grafo import carregar_grafo_txt, grafoPonderado
  
  #armazena os nos
 nos, grafo = carregar_grafo_txt("grafo.txt")
+nosP, grafoP = grafoPonderado("grafo.txt")
 
 
 class MinhaJanela(QWidget):
@@ -12,6 +14,7 @@ class MinhaJanela(QWidget):
         super().__init__()
 
         self.busca = buscaNP()
+        self.buscaP = buscaP()
 
         self.setWindowTitle("Interface de busca")
         self.setGeometry(200, 200, 300, 200)
@@ -24,7 +27,7 @@ class MinhaJanela(QWidget):
         
         #combobox com as opções de busca
         self.combo = QComboBox(self)
-        self.combo.addItems(["Amplitude", "Profundidade", "Profundidade Limitada", "Aprofundamento Iterativo", "Bidirecional"])
+        self.combo.addItems(["Amplitude", "Profundidade", "Profundidade Limitada", "Aprofundamento Iterativo", "Bidirecional", "Custo Uniforme"])
         layout.addWidget(self.combo)
 
         #conexões 
@@ -68,6 +71,8 @@ class MinhaJanela(QWidget):
             resultado = self.busca.aprof_iterativo(inicio, fim, nos, grafo, 5) #limite máximo
         elif opcao == "Bidirecional":
             resultado = self.busca.bidirecional(inicio, fim, nos, grafo)
+        elif opcao == "Custo Uniforme":
+            resultado = self.buscaP.custo_uniforme(inicio, fim, nosP, grafoP) # custo uniforme
 
         if resultado:
             custo = len(resultado) - 1 
