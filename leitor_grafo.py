@@ -1,48 +1,56 @@
 import re
-from collections import defaultdict
 
-def grafoPonderado(nome_arquivo):
-    nos = []
-    grafo = []
+def carregar_dados_completos(nome_arquivo):
 
-    padrao = re.compile(r'^(.+?)(\d+(?:\.\d+)?)$')
+    linhas_buffer = []
+    nos_set = set()
+    coordenadas = {}
 
     with open(nome_arquivo, "r", encoding="utf-8") as f:
         for linha in f:
-            partes = linha.strip().split()
-            if not partes:
+            linha_limpa = linha.strip()
+            if not linha_limpa:
                 continue
-            no = partes[0].upper()
-            nos.append(no)
+            
+            linhas_buffer.append(linha_limpa) 
+            
+            partes = linha_limpa.split(':')
+            info_no = partes[0].strip().split()
+            no_principal = info_no[0]
+            
+            nos_set.add(no_principal)
+            if len(info_no) == 3:
+                coordenadas[no_principal] = (float(info_no[1]), float(info_no[2]))
 
-            adj = []
-            for i in partes[1:]:
-                m = padrao.match(i)
-                if not m:
-                    raise ValueError(f"Nó inválido '{i}' na linha: {linha.strip()} (esperado ex.: B5)")
-                destino = m.group(1).upper()
-                pesoString = m.group(2)
-                peso = int(pesoString)
-                adj.append((destino, peso))
-            grafo.append(adj)
+    nos = sorted(list(nos_set))
+    node_to_index = {node: i for i, node in enumerate(nos)}
 
-    return nos, grafo
+ 
+    grafo = [[] for _ in nos]
+    grafoP = [[] for _ in nos]
 
-def carregar_grafo_txt(nome_arquivo):
-    nos = []
-    grafo = []
+  
+    corta_peso_regex = re.compile(r'\d+$')
+    vizinho_peso_regex = re.compile(r"([a-zA-Z]+)(\d+)$")
 
-    corta_peso = re.compile(r'\d+(?:\.\d+)?$')
+    for linha in linhas_buffer:
+        partes = linha.split(':')
+        no_principal = partes[0].strip().split()[0]
+        idx = node_to_index[no_principal]
 
-    with open(nome_arquivo, "r") as f:
-        for linha in f:
-            partes = linha.strip().split()
-            if not partes:
-                continue
-            no = partes[0].upper()
-            vizinhos = [corta_peso.sub("", i).upper() for i in partes[1:]]
+        if len(partes) > 1:
+            vizinhos_str = partes[1].strip().split()
+            for vizinho_com_peso in vizinhos_str:
 
-            nos.append(no)
-            grafo.append(vizinhos)
+                # Grafo Não Ponderado
+                vizinho_np = corta_peso_regex.sub("", vizinho_com_peso)
+                grafo[idx].append(vizinho_np)
 
-    return nos, grafo
+                # Grafo Ponderado
+                match = vizinho_peso_regex.match(vizinho_com_peso)
+                if match:
+                    vizinho, peso_str = match.groups()
+                    grafoP[idx].append((vizinho, int(peso_str)))
+    
+
+    return nos, grafo, grafoP, coordenadas
