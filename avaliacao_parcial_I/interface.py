@@ -5,9 +5,9 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
-from BuscaNP import buscaNP
-from BuscaP import buscaP
-from leitor_grafo import carregar_dados_completos
+from buscas.BuscaNP import buscaNP
+from buscas.BuscaP import buscaP
+from grafo.leitor_grafo import carregar_dados_completos
 
 try:
      nos, grafo, grafoP, coordenadas = carregar_dados_completos("grafo.txt")

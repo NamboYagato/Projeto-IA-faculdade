@@ -46,7 +46,7 @@ O projeto utiliza algumas bibliotecas Python que precisam ser instaladas. Execut
 ```bash
 pip install PyQt5 networkx matplotlib
 ```
-4. **Execute a aplicação**
+3. **Execute a aplicação**
 Execute o arquivo `interface.py` para iniciar o programa. O arquivo `grafo.txt` deve estar na mesma pasta.
 ```bash
 python interface.py
