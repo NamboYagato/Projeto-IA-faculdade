@@ -1,5 +1,5 @@
 from collections import deque
-from nos.Node import Node
+from Node import Node
 
 class buscaNP(object):
     #--------------------------------------------------------------------------

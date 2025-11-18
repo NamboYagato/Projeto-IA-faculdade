@@ -17,7 +17,7 @@ def calcular_distancia(coords):
     nos = sorted(coords.keys())
     n = len(nos)
 
-    distancia = []
+    distancia = [[0] * n for _ in range(n)]
 
     for i in range(n):
         for j in range(n):
@@ -37,7 +37,7 @@ def gerar_grafo(n, seed=None):
     return nos, coords, distancia
 
 def exportar_grafo_txt(list_nos, coords, distancia):
-    with open("../grafo.txt", "w", encoding="utf-8") as arquivo:
+    with open("grafo.txt", "w", encoding="utf-8") as arquivo:
         arquivo.write(f"NOS: {len(list_nos)}\n")
         arquivo.write("COORDENADAS:\n")
         for no in list_nos:

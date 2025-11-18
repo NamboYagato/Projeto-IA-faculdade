@@ -5,14 +5,14 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
-from buscas.BuscaNP import buscaNP
-from buscas.BuscaP import buscaP
-from grafo.leitor_grafo import carregar_dados_completos
+from BuscaNP import buscaNP
+from BuscaP import buscaP
+from leitor_grafo import carregar_dados_completos
 
 try:
-     nos, grafo, grafoP, coordenadas = carregar_dados_completos("grafo.txt")
+     nos, grafo, grafoP, coordenadas = carregar_dados_completos("grafo1.txt")
 except FileNotFoundError:
-    print("Erro: O arquivo 'grafo.txt' não foi encontrado.")
+    print("Erro: O arquivo 'grafo1.txt' não foi encontrado.")
     sys.exit(1)
 except Exception as e:
     print(f"Erro ao ler ou processar o arquivo de grafo: {e}")

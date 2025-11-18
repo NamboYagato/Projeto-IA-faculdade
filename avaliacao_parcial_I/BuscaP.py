@@ -1,5 +1,5 @@
 from collections import deque
-from nos.NodeP import NodeP
+from NodeP import NodeP
 import math
 
 class buscaP(object):
