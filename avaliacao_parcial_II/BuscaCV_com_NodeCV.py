@@ -2,9 +2,7 @@ import math
 from NodeCV import NodeCV
 import random
 
-from avaliacao_parcial_II import NodeCV
-
-class BuscaCV:
+class BuscaCVNodeCV:
     def __init__(self, dist):
         self.dist = dist
         self.n = len(dist)
@@ -52,9 +50,9 @@ class BuscaCV:
     # TROCA DE POSIÇÃO COM O VIZINHO
     #--------------------------------------------------------------------------
     def troca_com_vizinho(self, rota):
-        nova_rota = rota.copy()
-        i = random.sample(0, len(nova_rota) - 1)
-        j = random.randint(0, len(nova_rota) - 1)
+        nova_rota = rota[:]
+        i = random.sample(range(len(nova_rota)), 2)
+        j = random.sample(range(len(nova_rota)), 2)
         nova_rota[i], nova_rota[j] = nova_rota[j], nova_rota[i]
         return nova_rota
     #--------------------------------------------------------------------------
@@ -87,6 +85,7 @@ class BuscaCV:
     #--------------------------------------------------------------------------
     def tempera_simulada(self, node_inicial, temp_inicial, temp_final, fator_resfr):
         node_atual = node_inicial
+        node_final = node_inicial
         temp = temp_inicial
         while temp > temp_final:
             node_novo = self.node_sucessor(node_atual)
@@ -98,5 +97,7 @@ class BuscaCV:
                 aux = math.exp(-delta / temp)
                 if ale < aux:
                     node_atual = node_novo
+            if node_atual.custo < node_final.custo:
+                node_final = node_atual
             temp = temp * fator_resfr
-        return node_atual
+        return node_final
