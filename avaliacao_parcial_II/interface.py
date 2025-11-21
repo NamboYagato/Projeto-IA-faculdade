@@ -96,9 +96,11 @@ class MinhaJanela(QWidget):
         main_layout.addWidget(self.botao_executar)
         main_layout.addWidget(self.botao_anaise)
         main_layout.addWidget(self.label_resultado)
+        self.resize(400, 300)
 
         self.setLayout(main_layout)
         self.setWindowTitle("Avaliação Parcial II - IA / Problema do Caixeiro Viajante - Algoritmos de Busca Local e Genéticos")
+
 
     def on_metodo_changed(self, index):
         metodo = self.combo_metodo.currentText()
