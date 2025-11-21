@@ -29,8 +29,8 @@ class BuscaCV:
     #--------------------------------------------------------------------------
     def vizinho(self, solucao_atual):
         nova_solucao = solucao_atual[:]
-        i = random.sample(0, len(nova_solucao) - 1)
-        j = random.sample(0, len(nova_solucao) - 1)
+        i = random.randint(0, len(nova_solucao) - 1)
+        j = random.randint(0, len(nova_solucao) - 1)
         nova_solucao[i], nova_solucao[j] = nova_solucao[j], nova_solucao[i]
         return nova_solucao
     #--------------------------------------------------------------------------

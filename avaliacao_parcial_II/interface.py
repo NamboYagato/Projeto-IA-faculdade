@@ -121,32 +121,52 @@ class MinhaJanela(QWidget):
         
         self.nos, self.coords, self.dist = gerar_grafo(n) # gera o grafo/matriz com o tamanho do problema
         
-        self.busca_local = BuscaCVN(self.dist) # cria o objeto de busca local com o matriz gerada
+        # self.busca_local_com_node = BuscaCVN(self.dist) # cria o objeto da classe BuscaCV_com_NodeCV com o matriz gerada
+        self.busca_local = BuscaCV(self.dist) # cria o objeto da classe BuscaCV com o matriz gerada
         
-        node_inicial = self.busca_local.gerar_node_inicial() # gera a node inicial para os métodos de busca local / o node carrega a solução, o valor/custo e o pai/anterior da solução
-        si = node_inicial.rota
-        vi = node_inicial.custo
+        # node_inicial = self.busca_local_com_node.gerar_node_inicial() # gera a node inicial para os métodos de busca local / o node carrega a solução, o valor/custo e o pai/anterior da solução
+
+        # sin = node_inicial.rota # pega a solução inicial do node
+        # vin = node_inicial.custo # pega o valor/custo da solução inicial do node
+        si = self.busca_local.gerar_solucao_inicial() # gera a solução inicial sem usar node
+        vi = self.busca_local.valor_inicial(si) # gera o valor/custo da solução inicial sem usar node
 
         metodo = self.combo_metodo.currentText()
         if metodo.startswith("SUBIDA DE ENCOSTA"):
-            node_final = self.busca_local.subida_encosta(node_inicial)
-            sf = node_final.rota
-            vf = node_final.custo
+            # node_final = self.busca_local_com_node.subida_encosta(node_inicial) # executa o encosta usando o node
+            sa, va = self.busca_local.subida_encosta(si, vi) # executa o encosta usando o node
+            # sfn = node_final.rota
+            # vfn = node_final.custo
+            sf = sa
+            vf = va
         elif metodo.startswith("SUBIDA DE ENCOSTA COM TENTATIVAS"):
             tmax = self.spin_tentativas.value()
-            node_final = self.busca_local.subida_encosta_tentativas(node_inicial, tmax)
-            sf = node_final.rota
-            vf = node_final.custo
+            # node_final = self.busca_local_com_node.subida_encosta_tentativas(node_inicial, tmax)
+            sa, va = self.busca_local.subida_encosta_tentativas(si, vi, tmax)
+            # sfn = node_final.rota
+            # vfn = node_final.custo
+            sf = sa
+            vf = va
         elif metodo.startswith("TÊMPERA SIMULADA"):
             TI = 400
             TF = 0.1
             FR = 0.8
-            node_final = self.busca_local.tempera_simulada(node_inicial, TI, TF, FR)
-            sf = node_final.rota
-            vf = node_final.custo
+            # node_final = self.busca_local_com_node.tempera_simulada(node_inicial, TI, TF, FR)
+            sa, va = self.busca_local.tempera_simulada(si, vi, TI, TF, FR)
+            # sf = node_final.rota
+            # vf = node_final.custo
+            sf = sa
+            vf = va
         elif metodo.startswith("ALGORITMO GENÉTICO"):
             # ainda precisa mudar para funcionar com NovoGrafo
-            pass
+            TP   = 30    # tamanho da população
+            NG   = 300    # número de gerações
+            TC   = 0.9  # taxa de cruzamento
+            TM   = 0.1  # taxa de mutação
+            IG   = 0.2  # intervalo de geração
+            si, sa, vi, va = AlgoritmoGenetico(n, self.dist, TP, NG, TC, TM, IG)
+            sf = sa
+            vf = va
         else:
             return
         
@@ -158,6 +178,10 @@ class MinhaJanela(QWidget):
         texto.append(f"VI = {vi:.2f}")
         texto.append(f"SF = {sf}")
         texto.append(f"VF = {vf:.2f}")
+        # texto.append(f"SIN = {sin}")
+        # texto.append(f"VIN = {vin:.2f}")
+        # texto.append(f"SFN = {sfn}")
+        # texto.append(f"VFN = {vfn:.2f}")
         texto.append(f"Ganho = {ganho:.2f} %")
         self.label_resultado.setText("\n".join(texto))
 

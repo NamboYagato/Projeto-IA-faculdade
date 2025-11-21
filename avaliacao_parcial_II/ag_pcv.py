@@ -133,17 +133,19 @@ def AlgoritmoGenetico(n,mat,tp,ng,tc,tm,ig):
 #---------------------------------------------------------------------
 #---------------------------------------------------------------------
 # MÓDULO PRINCIPAL
-N    = 30   # quantidade de pontos
-MIN1 = 10   # valor mínimo para matriz de adjacências
-MAX1 = 100  # valor máximo para matriz de adjacências
+# N    = 6   # quantidade de pontos
+# MIN1 = 10   # valor mínimo para matriz de adjacências
+# MAX1 = 100  # valor máximo para matriz de adjacências
 
-TP   = 30    # tamanho da população
-NG   = 300    # número de gerações
-TC   = 0.9  # taxa de cruzamento
-TM   = 0.1  # taxa de mutação
-IG   = 0.2  # intervalo de geração
+# TP   = 30    # tamanho da população
+# NG   = 300    # número de gerações
+# TC   = 0.9  # taxa de cruzamento
+# TM   = 0.1  # taxa de mutação
+# IG   = 0.2  # intervalo de geração
 
-mat = GerarProblema(N,MIN1,MAX1)
+# mat = GerarProblema(N,MIN1,MAX1)
+# print("Matriz de adjacências:")
+# print(mat)
 
-si, sf, vi, vf = AlgoritmoGenetico(N,mat,TP,NG,TC,TM,IG)
-print("Ganho: ",round((100.*abs(vi-vf))/vi),"%")
+# si, sf, vi, vf = AlgoritmoGenetico(N,mat,TP,NG,TC,TM,IG)
+# print("Ganho: ",round((100.*abs(vi-vf))/vi),"%")

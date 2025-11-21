@@ -7,8 +7,8 @@ def gerar_coordenadas_aleatorias(n, seed=None):
     
     coordenadas = {}
     for i in range(n):
-        x = random.uniform(0, 100)
-        y = random.uniform(0, 100)
+        x = random.randint(0, 100)
+        y = random.randint(0, 100)
         coordenadas[i] = (x, y)
     
     return coordenadas
@@ -42,7 +42,7 @@ def exportar_grafo_txt(list_nos, coords, distancia):
         arquivo.write("COORDENADAS:\n")
         for no in list_nos:
             x, y = coords[no]
-            arquivo.write(f"{no} {x:.2f} {y:.2f}\n")
+            arquivo.write(f"CIDADE: {no} X: {x} Y: {y}\n")
         
         arquivo.write("DISTANCIAS:\n")
         n = len(list_nos)
@@ -50,7 +50,7 @@ def exportar_grafo_txt(list_nos, coords, distancia):
             valores = []
             for j in range(n):
                 valores.append(str(distancia[i][j]))
-            linha_str = " ".join(valores)
+            linha_str = ", ".join(valores)
             arquivo.write(linha_str + "\n")
 
 def print_grafo(list_nos, coords, distancia, max_linhas=None):
