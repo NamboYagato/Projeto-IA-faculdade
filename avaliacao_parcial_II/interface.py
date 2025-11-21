@@ -1,152 +1,165 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QVBoxLayout, QComboBox, QSpinBox, QFormLayout
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QVBoxLayout, QComboBox, QSpinBox, QFormLayout, QDoubleSpinBox
 from PyQt5.QtWidgets import QSizePolicy
 import networkx as nx
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
-from buscas.BuscaCV import buscaCV
-from grafo.leitor_grafo import carregar_dados_completos
 
-try:
-     nos, grafo, grafoP, coordenadas = carregar_dados_completos("grafo.txt")
-except FileNotFoundError:
-    print("Erro: O arquivo 'grafo.txt' não foi encontrado.")
-    sys.exit(1)
-except Exception as e:
-    print(f"Erro ao ler ou processar o arquivo de grafo: {e}")
-    sys.exit(1)
-
+from BuscaCV_com_NodeCV import BuscaCVNodeCV as BuscaCVN
+from BuscaCV import BuscaCV
+from ag_pcv import AlgoritmoGenetico
+from NovoGrafo import gerar_grafo
 
 class MinhaJanela(QWidget):
     def __init__(self):
         super().__init__()
-        self.busca = buscaNP()
-        self.buscaP = buscaP()
+        self.nos = None
+        self.coords = None
+        self.dist = None
+        self.busca_local = None
         self.init_ui()
-        self.desenha_grafo()
 
     def init_ui(self):
-        """Inicializa e organiza todos os widgets da interface."""
-        self.G = nx.Graph()
-        for i, no in enumerate(nos):
-            for vizinho in grafo[i]:
-                self.G.add_edge(no, vizinho)
-
-        self.setWindowTitle("Interface de Busca em Grafos")
-        self.setGeometry(200, 200, 500, 600)
-        
         main_layout = QVBoxLayout()
         form_layout = QFormLayout()
 
-        self.label_resultado = QLabel("Escolha um algoritmo e os nós de início/fim.", self)
-        self.label_resultado.setWordWrap(True)
-        main_layout.addWidget(self.label_resultado)
-        
-        # Adicione todos os seus algoritmos aqui para teste
-        self.combo_algoritmo = QComboBox(self)
-        self.combo_algoritmo.addItems([
-            "Amplitude", "Profundidade", "Profundidade Limitada", 
-            "Aprofundamento Iterativo", "Bidirecional", "Custo Uniforme", "Greedy","A Estrela","AIA Estrela"
+        # CAMPO TAMANHO DO PROBLEMA
+        self.spin_tamanho = QSpinBox(self)
+        self.spin_tamanho.setMinimum(3)
+        self.spin_tamanho.setMaximum(30)
+        self.spin_tamanho.setValue(30)
+        form_layout.addRow("Tamanho do problema:", self.spin_tamanho)
+
+        # COMBOBOX PARA A ESCOLHA DO MÉTODO
+        self.combo_metodo = QComboBox(self)
+        self.combo_metodo.addItems([
+            "SUBIDA DE ENCOSTA",
+            "SUBIDA DE ENCOSTA COM TENTATIVAS",
+            "TÊMPERA SIMULADA",
+            "ALGORITMO GENÉTICO"
         ])
-        
-        self.combo_algoritmo.currentIndexChanged.connect(self.mostra_limite)
-        form_layout.addRow("Algoritmo:", self.combo_algoritmo)
-    
-        self.input_limite = QSpinBox(self)
-        self.input_limite.setMinimum(1)
-        self.input_limite.setValue(3)
-        self.label_limite = QLabel("Limite de Profundidade:", self)
-        form_layout.addRow(self.label_limite, self.input_limite)
-        
-        self.combo_inicio = QComboBox(self)
-        self.combo_inicio.addItems(nos)
-        self.combo_fim = QComboBox(self)
-        self.combo_fim.addItems(nos)
-        form_layout.addRow("Nó de Início:", self.combo_inicio)
-        form_layout.addRow("Nó de Fim:", self.combo_fim)
+        form_layout.addRow("Algoritmo:", self.combo_metodo)
+
+        self.label_tentativas = QLabel("Tentativas:", self)
+        self.spin_tentativas = QDoubleSpinBox(self)
+        self.spin_tentativas.setMinimum(1)
+        self.spin_tentativas.setMaximum(10000)
+        self.spin_tentativas.setValue(30)
+        form_layout.addRow(self.label_tentativas, self.spin_tentativas)
+
+        self.label_tempI = QLabel("Temperatura Inicial:", self)
+        self.spin_tempI = QDoubleSpinBox(self)
+        self.spin_tempI.setMaximum(10000)
+        self.spin_tempI.setValue(400)
+
+        self.label_tempF = QLabel("Temperatura Final:", self)
+        self.spin_tempF = QDoubleSpinBox(self)
+        self.spin_tempF.setMaximum(10000)
+        self.spin_tempF.setValue(0.1)
+
+        self.label_fatorResf = QLabel("Fator de Resfriamento:", self)
+        self.spin_fatorResf = QDoubleSpinBox(self)
+        self.spin_fatorResf.setMinimum(0)
+        self.spin_fatorResf.setMaximum(1)
+        self.spin_fatorResf.setValue(0.8)
+
+        form_layout.addRow(self.label_tempI, self.spin_tempI)
+        form_layout.addRow(self.label_tempF, self.spin_tempF)
+        form_layout.addRow(self.label_fatorResf, self.spin_fatorResf)
+
+        self.label_tentativas.hide()
+        self.label_tempI.hide()
+        self.label_tempF.hide()
+        self.label_fatorResf.hide()
+        self.spin_tentativas.hide()
+        self.spin_tempI.hide()
+        self.spin_tempF.hide()
+        self.spin_fatorResf.hide()
+
+        self.combo_metodo.currentIndexChanged.connect(self.on_metodo_changed)
+
+        # BOTÃO PARA EXECUTAR O ALGORITMO
+        self.botao_executar = QPushButton("EXECUTAR", self)
+        self.botao_executar.clicked.connect(self.on_executar)
+
+        # ÁREA DE TEXTO PARA OS RESULTADOS
+        self.label_resultado = QLabel("", self)
+        self.label_resultado.setWordWrap(True)
 
         main_layout.addLayout(form_layout)
-        
-        self.botao_busca = QPushButton("Executar Busca", self)
-        self.botao_busca.clicked.connect(self.executar_busca)
-        main_layout.addWidget(self.botao_busca)
-        
-        self.figure, self.ax = plt.subplots(figsize=(5, 4))
-        self.canvas = FigureCanvas(self.figure)
-        self.canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        main_layout.addWidget(self.canvas)
+        main_layout.addWidget(self.botao_executar)
+        main_layout.addWidget(self.label_resultado)
 
         self.setLayout(main_layout)
-        self.mostra_limite()
+        self.setWindowTitle("Avaliação Parcial II - IA / Problema do Caixeiro Viajante - Algoritmos de Busca Local e Genéticos")
 
-    def mostra_limite(self):
-        algoritmo_selecionado = self.combo_algoritmo.currentText()
-        is_visible = algoritmo_selecionado in ["Profundidade Limitada", "Aprofundamento Iterativo"]
-        self.input_limite.setVisible(is_visible)
-        self.label_limite.setVisible(is_visible)
+    def on_metodo_changed(self, index):
+        metodo = self.combo_metodo.currentText()
+        self.label_tentativas.hide()
+        self.label_tempI.hide()
+        self.label_tempF.hide()
+        self.label_fatorResf.hide()
+        self.spin_tentativas.hide()
+        self.spin_tempI.hide()
+        self.spin_tempF.hide()
+        self.spin_fatorResf.hide()
 
-    def desenha_grafo(self, caminho=None):
-        self.ax.clear()
-        pos = nx.spring_layout(self.G, seed=42)
-        nx.draw(self.G, pos, with_labels=True, node_color="lightblue", node_size=800, font_size=10, ax=self.ax)
+        if metodo.startswith("SUBIDA DE ENCOSTA COM TENTATIVAS"):
+            self.label_tentativas.show()
+            self.spin_tentativas.show()
+        elif metodo.startswith("TÊMPERA SIMULADA"):
+            self.label_tempI.show()
+            self.label_tempF.show()
+            self.label_fatorResf.show()
+            self.spin_tempI.show()
+            self.spin_tempF.show()
+            self.spin_fatorResf.show()
 
-        if caminho:
-            if len(caminho) > 1:
-                edges = [(caminho[i], caminho[i + 1]) for i in range(len(caminho) - 1)]
-                nx.draw_networkx_edges(self.G, pos, edgelist=edges, edge_color="red", width=2, ax=self.ax)
-            nx.draw_networkx_nodes(self.G, pos, nodelist=caminho, node_color="red", ax=self.ax)
-        self.canvas.draw()
-
-    def executar_busca(self):
-        opcao = self.combo_algoritmo.currentText()
-        inicio = self.combo_inicio.currentText()
-        fim = self.combo_fim.currentText()
-        limite = self.input_limite.value()
-
-        caminho = None
-        custo_passos = 0
-        custo_soma = 0
-
-        buscas = {
-            "Amplitude": lambda: self.busca.amplitude(inicio, fim, nos, grafo),
-            "Profundidade": lambda: self.busca.profundidade(inicio, fim, nos, grafo),
-            "Profundidade Limitada": lambda: self.busca.prof_limitada(inicio, fim, nos, grafo, limite),
-            "Aprofundamento Iterativo": lambda: self.busca.aprof_iterativo(inicio, fim, nos, grafo, limite),
-            "Bidirecional": lambda: self.busca.bidirecional(inicio, fim, nos, grafo),
-            "Custo Uniforme": lambda: self.buscaP.custo_uniforme(inicio, fim, nos, grafoP),
-            "Greedy": lambda: self.buscaP.greedy(inicio, fim, nos, grafoP,coordenadas),
-            "A Estrela": lambda: self.buscaP.a_estrela(inicio, fim, nos, grafoP,coordenadas),
-            "AIA Estrela": lambda: self.buscaP.aia_estrela(inicio, fim, nos, grafoP,coordenadas)
-        }
+    def on_executar(self):
+        n = self.spin_tamanho.value() # lé o campo que informa o tamanho do problema
         
-        resultado = None
-        if opcao in buscas:
-            resultado = buscas[opcao]()
+        self.nos, self.coords, self.dist = gerar_grafo(n) # gera o grafo/matriz com o tamanho do problema
+        
+        self.busca_local = BuscaCVN(self.dist) # cria o objeto de busca local com o matriz gerada
+        
+        node_inicial = self.busca_local.gerar_node_inicial() # gera a node inicial para os métodos de busca local / o node carrega a solução, o valor/custo e o pai/anterior da solução
+        si = node_inicial.rota
+        vi = node_inicial.custo
 
-        if resultado is not None:
-      
-            if isinstance(resultado, tuple):
-                if isinstance(resultado[0], list):
-                    caminho = resultado[0]
-                    custo_soma = resultado[1]
-            elif isinstance(resultado, list):
-                caminho = resultado
-          
-            if caminho is not None:
-                custo_passos = len(caminho) - 1
-          
-                if isinstance(resultado, list):
-                    custo_soma = custo_passos
-
-        if caminho:
-            resultado_str = f"{opcao}: {' -> '.join(caminho)}"
-            resultado_str += f"\n(Custo em Passos: {custo_passos} | Custo em Soma dos Pesos: {custo_soma:.2f})"
-            self.label_resultado.setText(resultado_str)
-            self.desenha_grafo(caminho)
+        metodo = self.combo_metodo.currentText()
+        if metodo.startswith("SUBIDA DE ENCOSTA"):
+            node_final = self.busca_local.subida_encosta(node_inicial)
+            sf = node_final.rota
+            vf = node_final.custo
+        elif metodo.startswith("SUBIDA DE ENCOSTA COM TENTATIVAS"):
+            tmax = self.spin_tentativas.value()
+            node_final = self.busca_local.subida_encosta_tentativas(node_inicial, tmax)
+            sf = node_final.rota
+            vf = node_final.custo
+        elif metodo.startswith("TÊMPERA SIMULADA"):
+            TI = 400
+            TF = 0.1
+            FR = 0.8
+            node_final = self.busca_local.tempera_simulada(node_inicial, TI, TF, FR)
+            sf = node_final.rota
+            vf = node_final.custo
+        elif metodo.startswith("ALGORITMO GENÉTICO"):
+            # ainda precisa mudar para funcionar com NovoGrafo
+            pass
         else:
-            self.label_resultado.setText(f"{opcao}: Nenhum caminho encontrado.")
-            self.desenha_grafo()
+            return
+        
+        ganho = 100 * abs(vi - vf) / vi
+
+        texto = []
+        texto.append(f"Método: {metodo}")
+        texto.append(f"SI = {si}")
+        texto.append(f"VI = {vi:.2f}")
+        texto.append(f"SF = {sf}")
+        texto.append(f"VF = {vf:.2f}")
+        texto.append(f"Ganho = {ganho:.2f} %")
+        self.label_resultado.setText("\n".join(texto))
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

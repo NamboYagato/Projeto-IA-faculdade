@@ -37,7 +37,7 @@ def gerar_grafo(n, seed=None):
     return nos, coords, distancia
 
 def exportar_grafo_txt(list_nos, coords, distancia):
-    with open("grafo.txt", "w", encoding="utf-8") as arquivo:
+    with open("avaliacao_parcial_II/grafo.txt", "w", encoding="utf-8") as arquivo:
         arquivo.write(f"NOS: {len(list_nos)}\n")
         arquivo.write("COORDENADAS:\n")
         for no in list_nos:

@@ -51,8 +51,8 @@ class BuscaCVNodeCV:
     #--------------------------------------------------------------------------
     def troca_com_vizinho(self, rota):
         nova_rota = rota[:]
-        i = random.sample(range(len(nova_rota)), 2)
-        j = random.sample(range(len(nova_rota)), 2)
+        i = random.randint(0, len(nova_rota) - 1)
+        j = random.randint(0, len(nova_rota) - 1)
         nova_rota[i], nova_rota[j] = nova_rota[j], nova_rota[i]
         return nova_rota
     #--------------------------------------------------------------------------
