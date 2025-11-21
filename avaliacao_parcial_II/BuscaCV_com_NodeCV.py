@@ -40,28 +40,40 @@ class BuscaCVNodeCV:
     #--------------------------------------------------------------------------
     # GERAR NODE SUCESSOR
     #--------------------------------------------------------------------------
-    def node_sucessor(self, node_atual):
-        solucao_atual = node_atual.rota
-        sucessor_novo = self.troca_com_vizinho(solucao_atual)
-        valor_novo = self.custo(sucessor_novo)
-        node_novo = NodeCV(sucessor_novo, valor_novo, node_atual)
+    def node_sucessor_t(self, node_atual):
+        solucao_nova = node_atual.rota[:]
+        i = random.randint(0, len(solucao_nova) -1)
+        j = random.randint(0, len(solucao_nova) -1)
+        solucao_nova[i], solucao_nova[j] = solucao_nova[j], solucao_nova[i]
+        valor_novo = self.custo(solucao_nova)
+        node_novo = NodeCV(solucao_nova, valor_novo, node_atual)
         return node_novo
     #--------------------------------------------------------------------------
-    # TROCA DE POSIÇÃO COM O VIZINHO
+    # SUCESSORES
     #--------------------------------------------------------------------------
-    def troca_com_vizinho(self, rota):
-        nova_rota = rota[:]
-        i = random.randint(0, len(nova_rota) - 1)
-        j = random.randint(0, len(nova_rota) - 1)
-        nova_rota[i], nova_rota[j] = nova_rota[j], nova_rota[i]
-        return nova_rota
+    def node_sucessores(self, node_atual):
+        solucao_melhor = node_atual.rota
+        valor_melhor = node_atual.custo
+        pos_fixa = random.randint(0, self.n - 1)
+
+        for i in range(self.n):
+            if i == pos_fixa:
+                continue
+            solucao_nova = node_atual.rota[:]
+            solucao_nova[i], solucao_nova[pos_fixa] = solucao_nova[pos_fixa], solucao_nova[i]
+            valor_novo = self.custo(solucao_nova)
+            if valor_novo < valor_melhor:
+                solucao_melhor = solucao_nova
+                valor_melhor = valor_novo
+        node_novo = NodeCV(solucao_melhor, valor_melhor, node_atual)
+        return node_novo
     #--------------------------------------------------------------------------
     # SUBIDADE DE ENCOSTA
     #--------------------------------------------------------------------------
     def subida_encosta(self, node_inicial):
         node_atual = node_inicial
         while True:
-            node_novo = self.node_sucessor(node_atual)
+            node_novo = self.node_sucessores(node_atual)
             if (node_novo.custo < node_atual.custo):
                 node_atual = node_novo
             else:
@@ -73,7 +85,7 @@ class BuscaCVNodeCV:
         node_atual = node_inicial
         tentativas = 0
         while tentativas < tmax:
-            node_novo = self.node_sucessor(node_atual)
+            node_novo = self.node_sucessores(node_atual)
             if (node_novo.custo < node_atual.custo):
                 node_atual = node_novo
                 tentativas = 0
@@ -88,7 +100,7 @@ class BuscaCVNodeCV:
         node_final = node_inicial
         temp = temp_inicial
         while temp > temp_final:
-            node_novo = self.node_sucessor(node_atual)
+            node_novo = self.node_sucessor_t(node_atual)
             delta = node_novo.custo - node_atual.custo
             if delta < 0:
                 node_atual = node_novo

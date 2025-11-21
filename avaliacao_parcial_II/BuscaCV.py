@@ -25,21 +25,34 @@ class BuscaCV:
         soma += self.dist[solucao[-1]][solucao[0]] # soma o último valor que é igual ao primeiro
         return soma
     #--------------------------------------------------------------------------
-    # TROCA DE POSIÇÃO COM O VIZINHO
+    # SUCESSOR_T
     #--------------------------------------------------------------------------
-    def vizinho(self, solucao_atual):
-        nova_solucao = solucao_atual[:]
-        i = random.randint(0, len(nova_solucao) - 1)
-        j = random.randint(0, len(nova_solucao) - 1)
-        nova_solucao[i], nova_solucao[j] = nova_solucao[j], nova_solucao[i]
-        return nova_solucao
-    #--------------------------------------------------------------------------
-    # SUCESSOR
-    #--------------------------------------------------------------------------
-    def sucessor(self, solucao_atual):
-        solucao_nova = self.vizinho(solucao_atual)
+    def sucessor_t(self, solucao_atual):
+        solucao_nova = solucao_atual[:]
+        i = random.randint(0, len(solucao_nova) - 1)
+        j = random.randint(0, len(solucao_nova) - 1)
+        solucao_nova[i], solucao_nova[j] = solucao_nova[j], solucao_nova[i]
         valor_novo = self.valor_inicial(solucao_nova)
         return solucao_nova, valor_novo
+    #--------------------------------------------------------------------------
+    # SUCESSORES
+    #--------------------------------------------------------------------------
+    def sucessores(self, solucao_atual, valor_atual):
+        solucao_melhor = solucao_atual
+        valor_melhor = valor_atual
+        pos_fixa = random.randint(0, self.n - 1)
+
+        for i in range(self.n):
+            if i == pos_fixa:
+                continue
+            solucao_nova = solucao_atual[:]
+            solucao_nova[i], solucao_nova[pos_fixa] = solucao_nova[pos_fixa], solucao_nova[i]
+            valor_novo = self.valor_inicial(solucao_nova)
+
+            if valor_novo < valor_melhor:
+                solucao_melhor = solucao_nova
+                valor_melhor = valor_novo
+        return solucao_melhor, valor_melhor
     #--------------------------------------------------------------------------
     # SUBIDA DE ENCOSTA
     #--------------------------------------------------------------------------
@@ -47,7 +60,7 @@ class BuscaCV:
         solucao_atual = solucao_inicial
         valor_atual = valor_inicial
         while True:
-            solucao_nova, valor_novo = self.sucessor(solucao_atual)
+            solucao_nova, valor_novo = self.sucessores(solucao_atual, valor_atual)
             if valor_novo < valor_atual:
                 solucao_atual = solucao_nova
                 valor_atual = valor_novo
@@ -61,7 +74,7 @@ class BuscaCV:
         valor_atual = valor_inicial
         tentativas = 0
         while tentativas < tmax:
-            solucao_nova, valor_novo = self.sucessor(solucao_atual)
+            solucao_nova, valor_novo = self.sucessores(solucao_atual, valor_atual)
             if valor_novo < valor_atual:
                 solucao_atual = solucao_nova
                 valor_atual = valor_novo
@@ -79,7 +92,7 @@ class BuscaCV:
         valor_final = valor_inicial
         temp = temp_inicial
         while temp >= temp_final:
-            solucao_nova, valor_novo = self.sucessor(solucao_atual)
+            solucao_nova, valor_novo = self.sucessor_t(solucao_atual)
             delta = valor_novo - valor_atual
             if delta < 0:
                 solucao_atual = solucao_nova
