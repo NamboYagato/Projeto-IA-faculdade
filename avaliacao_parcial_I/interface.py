@@ -12,7 +12,7 @@ from leitor_grafo import carregar_dados_completos
 try:
      nos, grafo, grafoP, coordenadas = carregar_dados_completos("grafo1.txt")
 except FileNotFoundError:
-    print("Erro: O arquivo 'grafo1.txt' não foi encontrado.")
+    print("Erro: O arquivo 'grafo.txt' não foi encontrado.")
     sys.exit(1)
 except Exception as e:
     print(f"Erro ao ler ou processar o arquivo de grafo: {e}")
