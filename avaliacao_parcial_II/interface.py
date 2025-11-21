@@ -83,12 +83,18 @@ class MinhaJanela(QWidget):
         self.botao_executar = QPushButton("EXECUTAR", self)
         self.botao_executar.clicked.connect(self.on_executar)
 
+        self.botao_anaise = QPushButton("ANÁLISE", self)
+        self.botao_anaise.clicked.connect(self.gerar_pdf)
+        
+        
+
         # ÁREA DE TEXTO PARA OS RESULTADOS
         self.label_resultado = QLabel("", self)
         self.label_resultado.setWordWrap(True)
 
         main_layout.addLayout(form_layout)
         main_layout.addWidget(self.botao_executar)
+        main_layout.addWidget(self.botao_anaise)
         main_layout.addWidget(self.label_resultado)
 
         self.setLayout(main_layout)
@@ -184,6 +190,179 @@ class MinhaJanela(QWidget):
         # texto.append(f"VFN = {vfn:.2f}")
         texto.append(f"Ganho = {ganho:.2f} %")
         self.label_resultado.setText("\n".join(texto))
+
+    def gerar_pdf(self):
+      
+        from reportlab.lib.pagesizes import letter
+        from reportlab.pdfgen import canvas
+
+        n = self.spin_tamanho.value()
+
+        nome_pdf = f"Relatorio_Todos_Metodos_N{n}.pdf"
+        c = canvas.Canvas(nome_pdf, pagesize=letter)
+
+        # ===========================================================
+        # Função interna para executar um caso e calcular o ganho
+        # ===========================================================
+        def executar(busca, params, metodo_nome, config_texto):
+        # SUBIDA DE ENCOSTA NORMAL
+                if metodo_nome == "SE":
+                    si = busca.gerar_solucao_inicial()
+                    vi = busca.valor_inicial(si)
+                    sf, vf = busca.subida_encosta(si, vi)
+
+                # SUBIDA DE ENCOSTA COM TENTATIVAS
+                elif metodo_nome == "SET":
+                    si = busca.gerar_solucao_inicial()
+                    vi = busca.valor_inicial(si)
+                    sf, vf = busca.subida_encosta_tentativas(si, vi, params["TMAX"])
+
+                # TÊMPERA SIMULADA
+                elif metodo_nome == "TS":
+                    si = busca.gerar_solucao_inicial()
+                    vi = busca.valor_inicial(si)
+                    sf, vf = busca.tempera_simulada(si, vi,
+                                                    params["TI"], params["TF"], params["FR"])
+
+                # ALGORITMO GENÉTICO (NÃO USA busca)
+                elif metodo_nome == "AG":
+                    si, sf, vi, vf = AlgoritmoGenetico(
+                        params["N"],
+                        params["dist"],
+                        params["TP"],
+                        params["NG"],
+                        params["TC"],
+                        params["TM"],
+                        params["IG"]
+                    )
+
+                # CALCULAR GANHO
+                ganho = 100 * abs(vi - vf) / vi
+                return ganho
+        # ===========================================================
+        # Escrever título no PDF
+        # ===========================================================
+        y = 760
+        c.setFont("Helvetica-Bold", 16)
+        c.drawString(30, y, "RELATÓRIO (PDF)")
+        y -= 40
+
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(30, y, f"N = {n}")
+        y -= 40
+
+        # ===========================================================
+        # BLOCO: Subida de Encosta (1 vez)
+        # ===========================================================
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(30, y, "Método: Subida de Encosta (1 execução)")
+        y -= 25
+
+        nos, coords, dist = gerar_grafo(n)
+        busca = BuscaCV(dist)
+
+        ganho = executar(busca, {}, "SE", "")
+        c.setFont("Helvetica", 12)
+        c.drawString(50, y, f"Ganho: {ganho:.2f}%")
+        y -= 40
+
+        # ===========================================================
+        # BLOCO: Subida de Encosta com Tentativas (3 execuções)
+        # ===========================================================
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(30, y, "Método: Subida de Encosta com Tentativas")
+        y -= 25
+
+        configs_set = [
+            ("TMAX = N",        n),
+            ("TMAX = N/2",      n/2),
+            ("TMAX = N/4",      n/4)
+        ]
+
+        for texto, tmax in configs_set:
+            nos, coords, dist = gerar_grafo(n)
+            busca = BuscaCV(dist)
+
+            ganho = executar(busca, {"TMAX": tmax}, "SET", texto)
+
+            c.setFont("Helvetica", 12)
+            c.drawString(50, y, f"{texto}  →  Ganho: {ganho:.2f}%")
+            y -= 25
+
+            if y < 80:
+                c.showPage()
+                y = 760
+
+        y -= 15
+
+        # ===========================================================
+        # BLOCO: Têmpera Simulada (4 execuções)
+        # ===========================================================
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(30, y, "Método: Têmpera Simulada")
+        y -= 25
+
+        configs_ts = [
+            ("TI=400 TF=0.1 FR=0.8",   400, 0.1, 0.8),
+            ("TI=400 TF=0.01 FR=0.8",  400, 0.01, 0.8),
+            ("TI=200 TF=0.1 FR=0.8",   200, 0.1, 0.8),
+            ("TI=200 TF=0.01 FR=0.8",  200, 0.01, 0.8),
+        ]
+
+        for texto, TI, TF, FR in configs_ts:
+            nos, coords, dist = gerar_grafo(n)
+            busca = BuscaCV(dist)
+
+            ganho = executar(busca,
+                            {"TI": TI, "TF": TF, "FR": FR},
+                            "TS",
+                            texto)
+
+            c.setFont("Helvetica", 12)
+            c.drawString(50, y, f"{texto}  →  Ganho: {ganho:.2f}%")
+            y -= 25
+
+            if y < 80:
+                c.showPage()
+                y = 760
+
+        y -= 15
+
+        # ===========================================================
+        # BLOCO: Algoritmo Genético (4 execuções)
+        # ===========================================================
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(30, y, "Método: Algoritmo Genético")
+        y -= 25
+
+        configs_ag = [
+            ("TC=0.8 TM=0.1 IG=0.2", 0.8, 0.1, 0.2),
+            ("TC=0.4 TM=0.1 IG=0.2", 0.4, 0.1, 0.2),
+            ("TC=0.8 TM=0.6 IG=0.2", 0.8, 0.6, 0.2),
+            ("TC=0.8 TM=0.1 IG=0.0", 0.8, 0.1, 0.0),
+        ]
+
+        for texto, TC, TM, IG in configs_ag:
+            nos, coords, dist = gerar_grafo(n)
+
+            ganho = executar(
+                None,
+                {"N": n, "TP": n, "NG": 2*n, "TC": TC, "TM": TM, "IG": IG, "dist": dist},
+                "AG",
+                texto
+)
+
+            c.setFont("Helvetica", 12)
+            c.drawString(50, y, f"{texto}  →  Ganho: {ganho:.2f}%")
+            y -= 25
+
+            if y < 80:
+                c.showPage()
+                y = 760
+
+        c.save()
+
+        self.label_resultado.setText(f"Relatório gerado: {nome_pdf}")
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
