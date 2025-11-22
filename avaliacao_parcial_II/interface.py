@@ -18,6 +18,8 @@ class MinhaJanela(QWidget):
         self.coords = None
         self.dist = None
         self.busca_local = None
+        self.si = None
+        self.vi = None
         self.init_ui()
 
     def init_ui(self):
@@ -31,6 +33,13 @@ class MinhaJanela(QWidget):
         self.spin_tamanho.setValue(30)
         form_layout.addRow("Tamanho do problema:", self.spin_tamanho)
 
+        # BOTÃO PARA GERAR A SOLUÇÃO INICIAL
+        self.botao_solucao =QPushButton("GERAR SOLUÇÃO INICIAL")
+        self.botao_solucao.clicked.connect(self.gerar_solucao)
+
+        self.label_solucao_inicial = QLabel("", self)
+        self.label_solucao_inicial.setWordWrap(True)
+
         # COMBOBOX PARA A ESCOLHA DO MÉTODO
         self.combo_metodo = QComboBox(self)
         self.combo_metodo.addItems([
@@ -39,6 +48,8 @@ class MinhaJanela(QWidget):
             "TÊMPERA SIMULADA",
             "ALGORITMO GENÉTICO"
         ])
+        form_layout.addRow("GERAR SOLUÇÃO INICIAL", self.botao_solucao)
+        form_layout.addRow("", self.label_solucao_inicial)
         form_layout.addRow("Algoritmo:", self.combo_metodo)
 
         self.label_tentativas = QLabel("Tentativas:", self)
@@ -124,49 +135,67 @@ class MinhaJanela(QWidget):
             self.spin_tempF.show()
             self.spin_fatorResf.show()
 
-    def on_executar(self):
+    def gerar_solucao(self):
         n = self.spin_tamanho.value() # lé o campo que informa o tamanho do problema
-        
         self.nos, self.coords, self.dist = gerar_grafo(n) # gera o grafo/matriz com o tamanho do problema
-        
-        # self.busca_local_com_node = BuscaCVN(self.dist) # cria o objeto da classe BuscaCV_com_NodeCV com o matriz gerada
-        self.busca_local = BuscaCV(self.dist) # cria o objeto da classe BuscaCV com o matriz gerada
+
+        # self.busca_local_com_node = BuscaCVN(self.dist) # com node
+        self.busca_local = BuscaCV(self.dist) # sem node
         
         # node_inicial = self.busca_local_com_node.gerar_node_inicial() # gera a node inicial para os métodos de busca local / o node carrega a solução, o valor/custo e o pai/anterior da solução
 
-        # sin = node_inicial.rota # pega a solução inicial do node
-        # vin = node_inicial.custo # pega o valor/custo da solução inicial do node
+        # si = node_inicial.rota # pega a solução inicial do node
+        # vi = node_inicial.custo # pega o valor/custo da solução inicial do node
         si = self.busca_local.gerar_solucao_inicial() # gera a solução inicial sem usar node
-        vi = self.busca_local.valor_inicial(si) # gera o valor/custo da solução inicial sem usar node
+        vi = self.busca_local.valor_inicial(si) # gera a solução inicial sem usar node
+
+        self.si = si
+        self.vi = vi
+
+        texto = []
+        texto.append(f"N: {n}")
+        texto.append(f"SI: {si}")
+        if n != None:
+            self.label_solucao_inicial.setText("\n".join(texto))
+
+    def on_executar(self):
+        n = self.spin_tamanho.value() # lé o campo que informa o tamanho do problema
+
+        if self.dist is None or self.si is None or self.vi is None:
+            self.gerar_solucao()
+
+        # self.busca_local_com_node = BuscaCVN(self.dist)
+        self.busca_local = BuscaCV(self.dist)
+        si = self.si
+        vi = self.vi
 
         metodo = self.combo_metodo.currentText()
         if metodo.startswith("SUBIDA DE ENCOSTA"):
             # node_final = self.busca_local_com_node.subida_encosta(node_inicial) # executa o encosta usando o node
-            sa, va = self.busca_local.subida_encosta(si, vi) # executa o encosta usando o node
-            # sfn = node_final.rota
-            # vfn = node_final.custo
+            sa, va = self.busca_local.subida_encosta(si, vi) # executa o encosta sem usar o node
+            # sf = node_final.rota
+            # vf = node_final.custo
             sf = sa
             vf = va
         elif metodo.startswith("SUBIDA DE ENCOSTA COM TENTATIVAS"):
             tmax = self.spin_tentativas.value()
-            # node_final = self.busca_local_com_node.subida_encosta_tentativas(node_inicial, tmax)
-            sa, va = self.busca_local.subida_encosta_tentativas(si, vi, tmax)
-            # sfn = node_final.rota
-            # vfn = node_final.custo
+            # node_final = self.busca_local_com_node.subida_encosta_tentativas(node_inicial, tmax) # encosta com tentativas com node
+            sa, va = self.busca_local.subida_encosta_tentativas(si, vi, tmax) # encosta com tentativas sem node
+            # sf = node_final.rota
+            # vf = node_final.custo
             sf = sa
             vf = va
         elif metodo.startswith("TÊMPERA SIMULADA"):
             TI = 400
             TF = 0.1
             FR = 0.8
-            # node_final = self.busca_local_com_node.tempera_simulada(node_inicial, TI, TF, FR)
-            sa, va = self.busca_local.tempera_simulada(si, vi, TI, TF, FR)
+            # node_final = self.busca_local_com_node.tempera_simulada(node_inicial, TI, TF, FR) # tempera simulada com node
+            sa, va = self.busca_local.tempera_simulada(si, vi, TI, TF, FR) # tempera simulada sem node
             # sf = node_final.rota
             # vf = node_final.custo
             sf = sa
             vf = va
         elif metodo.startswith("ALGORITMO GENÉTICO"):
-            # ainda precisa mudar para funcionar com NovoGrafo
             TP   = 30    # tamanho da população
             NG   = 300    # número de gerações
             TC   = 0.9  # taxa de cruzamento
@@ -186,10 +215,6 @@ class MinhaJanela(QWidget):
         texto.append(f"VI = {vi:.2f}")
         texto.append(f"SF = {sf}")
         texto.append(f"VF = {vf:.2f}")
-        # texto.append(f"SIN = {sin}")
-        # texto.append(f"VIN = {vin:.2f}")
-        # texto.append(f"SFN = {sfn}")
-        # texto.append(f"VFN = {vfn:.2f}")
         texto.append(f"Ganho = {ganho:.2f} %")
         self.label_resultado.setText("\n".join(texto))
 
@@ -352,7 +377,7 @@ class MinhaJanela(QWidget):
                 {"N": n, "TP": n, "NG": 2*n, "TC": TC, "TM": TM, "IG": IG, "dist": dist},
                 "AG",
                 texto
-)
+                )
 
             c.setFont("Helvetica", 12)
             c.drawString(50, y, f"{texto}  →  Ganho: {ganho:.2f}%")
